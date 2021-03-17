@@ -87,5 +87,5 @@ for row in elements:
 
     ax2.plot([x1,x2],[y1,y2])
 
-# plt.show()
+plt.show()
 

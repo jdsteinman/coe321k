@@ -24,6 +24,3 @@ Outputs:
     fi: internal forces
     fe: nodal forces
 
-Example:
-    test.py
-
