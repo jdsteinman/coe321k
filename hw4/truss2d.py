@@ -2,23 +2,23 @@ import numpy as np
 from scipy.linalg import solve
 
 ## Solve 2d truss problem
-def truss2d(nodes_file, elements_file, forces_file, disp_file):
+def truss2d(nodes_file, elements_file, forces_file, disp_file, index=0):
 
     # Read and preallocate
-    nodes, elements, forces, disp = read_inputs(nodes_file, elements_file, forces_file, disp_file)
+    nodes, elements, forces, disp = read_inputs(nodes_file, elements_file, forces_file, disp_file, index)
 
     NN = nodes.shape[0]
     NE = elements.shape[0]
     Ndbcs = disp.shape[0]
-    Ndofs = 2*NN-Ndbcs
 
     u = np.zeros((2*NN))
     F = np.zeros((2*NN))
     Kloc = np.zeros((4,4))
     K = np.zeros((2*NN, 2*NN))
-    eps = np.zeros((NE, 1))
-    Fi  = np.zeros((NN, 1))
-    Fcheck = np.zeros((2*NN))
+    eps = np.zeros((NE))
+    stress = np.zeros((NE))
+    Fi  = np.zeros((NE))
+    Fe = np.zeros((2*NN))
 
     # Global Connectivity 
     # gcon(i, j) = global dof for node i and dof 
@@ -42,15 +42,14 @@ def truss2d(nodes_file, elements_file, forces_file, disp_file):
     F[fdof] = fval
 
     # Stiffness assembly
-    econ = elements[:,1:3]
     for e, row in enumerate(elements):
-        n1 = int(row[1])
-        n2 = int(row[2])
-        E  = row[3] 
-        A  = row[4]
+        n1 = int(row[0])
+        n2 = int(row[1])
+        E  = row[2] 
+        A  = row[3]
 
-        x1, y1 = nodes[n1,1], nodes[n1,2]
-        x2, y2 = nodes[n2,1], nodes[n2,2]
+        x1, y1 = nodes[n1,0], nodes[n1,1]
+        x2, y2 = nodes[n2,0], nodes[n2,1]
 
         L = ((x2-x1)**2 + (y2-y1)**2)**0.5
         c = (x2-x1)/L
@@ -68,7 +67,7 @@ def truss2d(nodes_file, elements_file, forces_file, disp_file):
         for inode in range(2):
             for idof in range(2):
                 ldofi =  2*inode+idof
-                gnodei = int(econ[e, inode])
+                gnodei = int(elements[e, inode])
                 gdofi = gcon[gnodei, idof]
 
                 # Check if dirichlet row
@@ -81,7 +80,7 @@ def truss2d(nodes_file, elements_file, forces_file, disp_file):
                 for jnode in range(2):
                     for jdof in range(2):
                         ldofj = 2*jnode+jdof
-                        gnodej = int(econ[e, jnode])
+                        gnodej = int(elements[e, jnode])
                         gdofj = gcon[gnodej, jdof]
 
                         # If dirichlet column
@@ -90,19 +89,18 @@ def truss2d(nodes_file, elements_file, forces_file, disp_file):
                         else:
                             K[gdofi,gdofj] += Kloc[ldofi,ldofj]
 
-
     # Solve for u
     u = solve(K, F)
 
-    # Solve for Strains
+    # Solve for Strains, Stresses
     for e, row in enumerate(elements):
-        n1 = int(row[1])
-        n2 = int(row[2])
-        E  = row[3] 
-        A  = row[4]
+        n1 = int(row[0])
+        n2 = int(row[1])
+        E  = row[2] 
+        A  = row[3]
 
-        x1, y1 = nodes[n1,1], nodes[n1,2]
-        x2, y2 = nodes[n2,1], nodes[n2,2]
+        x1, y1 = nodes[n1,0], nodes[n1,1]
+        x2, y2 = nodes[n2,0], nodes[n2,1]
         u1, v1 = u[gcon[n1,0]], u[gcon[n1,1]]
         u2, v2 = u[gcon[n2,0]], u[gcon[n2,1]]
 
@@ -111,22 +109,17 @@ def truss2d(nodes_file, elements_file, forces_file, disp_file):
         s = (y2-y1)/L
 
         eps[e] = (u2-u1)*c/L + (v2-v1)*s/L
+        stress[e] = eps[e]*E
         Fi[e]  = eps[e]*E*A
-        Fcheck[gcon[n1,0]] -= Fi[e] * c
-        Fcheck[gcon[n1,1]] -= Fi[e] * s
-        Fcheck[gcon[n2,0]] += Fi[e] * c
-        Fcheck[gcon[n2,1]] += Fi[e] * s
+        Fe[gcon[n1,0]] -= Fi[e] * c
+        Fe[gcon[n1,1]] -= Fi[e] * s
+        Fe[gcon[n2,0]] += Fi[e] * c
+        Fe[gcon[n2,1]] += Fi[e] * s
 
-    np.set_printoptions(precision=10)
-    print("u: \n", u)
-    print("eps: \n", eps)
-    print("Fi: \n", Fi)
-    print("Fcheck: \n", Fcheck)
-
-    return u
+    return u, eps, stress, Fi, Fe
 
 ## Inputs
-def read_inputs(nodes, elements=None, forces=None, disp=None):
+def read_inputs(nodes, elements, forces, disp, index=0):
     nodes = np.genfromtxt(nodes, comments='#')
     elements = np.genfromtxt(elements, comments='#')
     forces = np.genfromtxt(forces, comments='#')
@@ -139,19 +132,16 @@ def read_inputs(nodes, elements=None, forces=None, disp=None):
     if forces.ndim == 1:
         forces = forces.reshape((1,-1))
 
-    nodes[:,0]-=1
-    elements[:,0:3]-=1
-    disp[:,0:2]-=1
-    forces[:,0:2]-=1
+    if index==0:
+        pass
+    elif index==1:
+        elements[:,0:2]-=1
+        disp[:,0:2]-=1
+        forces[:,0:2]-=1
+    else:
+        print("Invalid file ordering: " + index)
+        return
 
     return nodes, elements, forces, disp
 
-## Test function
-path = "./test/"
-nodes = path + "nodes.txt"
-elements = path + "elements.txt"
-forces = path + "forces.txt"
-disp = path + "disp.txt"
-
-truss2d(nodes, elements, forces, disp)
 
