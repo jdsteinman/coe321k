@@ -68,10 +68,10 @@ def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
         Kloc = np.array([
             [E*A/L, 0, 0, -E*A/L, 0, 0],
             [0, 12*E*I/L**3, 6*E*I/L**2, 0, -12*E*I/L**3, 6*E*I/L**2],
-            [0, 6*E*I/L**2, 4*E*I/L, 0, -6*E*I/L**2, 2*E*I/L ],
+            [0, 6*E*I/L**2,  4*E*I/L,    0, -6*E*I/L**2,  2*E*I/L ],
             [-E*A/L, 0, 0, E*A/L, 0, 0],
             [0, -12*E*I/L**3, -6*E*I/L**2, 0, 12*E*I/L**3, -6*E*I/L**2],
-            [0, 6*E*I/L**2, 2*E*I/L, 0, -6*E*I/L**2, 4*E*I/L ]
+            [0,  6*E*I/L**2,   2*E*I/L,    0, -6*E*I/L**2,  4*E*I/L ]
         ])
 
         Kloc = R.T@Kloc@R
@@ -105,17 +105,23 @@ def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
     # Solve for u
     u = solve(K, F)
 
+    truss_id = [0, 1, 3, 4, 6, 7, 9, 10, 12, 13]
+    K = K[np.ix_(truss_id, truss_id)]
+    np.set_printoptions(precision=3)
+    np.savetxt("./hw6/Kreduced.txt", K, fmt="% 5.3f")
+
     # Solve for Strains
     for e, row in enumerate(elements):
         n1 = int(row[0])
         n2 = int(row[1])
         E  = row[2] 
+        I  = row[3]
         A  = row[3]
 
         x1, y1 = nodes[n1,0], nodes[n1,1]
         x2, y2 = nodes[n2,0], nodes[n2,1]
-        u1, v1 = u[gcon[n1,0]], u[gcon[n1,1]]
-        u2, v2 = u[gcon[n2,0]], u[gcon[n2,1]]
+        u1, v1, a1 = u[gcon[n1,0]], u[gcon[n1,1]], u[gcon[n1,2]]
+        u2, v2, a2 = u[gcon[n2,0]], u[gcon[n2,1]], u[gcon[n1,2]]
 
         L = ((x2-x1)**2 + (y2-y1)**2)**0.5
         c = (x2-x1)/L
