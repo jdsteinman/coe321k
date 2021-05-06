@@ -3,18 +3,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def main():
-    path = "./hw6/inputs/"
+    path = "./inputs/"
     nodes = path + "nodes.txt"
     elements = path + "elements.txt"
     forces = path + "forces.txt"
     disp = path + "displacements.txt"
 
-    u, eps, stress, Fi, Fe = solve_frame(nodes, elements, forces, disp)
+    u, Fe = solve_frame(nodes, elements, forces, disp)
 
     print("\nu\n", u.reshape((-1,1)))
-    print("\neps\n", eps.reshape((-1,1)))
-    print("\nsigma\n", stress.reshape((-1,1)))
-    print("\nFi\n", Fi.reshape((-1,1)))
     print("\nFe\n", Fe.reshape((-1,1)))
 
     fig, ax = plt.subplots(1,1)
@@ -27,7 +24,6 @@ def main():
         y2 = nodes[int(row[1]),1]
 
         ax.plot([x1,x2],[y1,y2])
-
 
     fig2, ax2 = plt.subplots(1,1)
     ax2.set_aspect('equal', adjustable='box')
