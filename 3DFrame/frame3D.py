@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.linalg import solve
-from math import cos, sin, asin
+from math import cos, sin, asin, pi
 
 ## Solve 3d frame problem
 def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
@@ -56,7 +56,10 @@ def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
         cy = (y2-y1)/L
         cz = (z2-z1)/L
         theta = asin(cz)
-        phi = asin(cy/cos(theta))
+        if theta==pi/2:
+            phi=0
+        else
+            phi = asin(cy/cos(theta))
 
         c=cos(phi); s=sin(phi)
         R1 = np.array([
@@ -105,8 +108,6 @@ def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
         Kloc[11,11]=4*EI_Z/L
 
         Kloc = Kloc + Kloc.T - np.diag(Kloc.diagonal())
-        np.savetxt("Klocal.txt", Kloc, fmt="% 3d")
-        np.savetxt("R.txt", R, fmt="% 3d")
         Kloc = R.T@Kloc@R
 
         # Loop over local rows
@@ -125,7 +126,6 @@ def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
                         K[gdofi,gdofj] += Kloc[ldofi,ldofj]
 
     # Reduce
-    np.savetxt("K.txt", K, fmt="% 3d")
     Kreduced = K
     Freduced = F
 
@@ -153,8 +153,6 @@ def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
                         # If dirichlet column
                         if (gdofj in dbcdof):
                             Freduced[gdofi] -= K[gdofi,gdofj]*u[gdofj]
-
-    np.savetxt("Kreduced.txt", Kreduced, fmt="% 3d")
 
     # Solve for u
     u = solve(Kreduced, Freduced)

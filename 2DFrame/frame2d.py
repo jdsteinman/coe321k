@@ -124,26 +124,7 @@ def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
 
     # Postprocessing
     Fe = K@u
-    # for e, row in enumerate(elements):
-    #     n1 = int(row[0])
-    #     n2 = int(row[1])
-    #     E  = row[2] 
-    #     I  = row[3]
-    #     A  = row[3]
-
-    #     x1, y1 = nodes[n1,0], nodes[n1,1]
-    #     x2, y2 = nodes[n2,0], nodes[n2,1]
-    #     u1, v1, a1 = u[gcon[n1,0]], u[gcon[n1,1]], u[gcon[n1,2]]
-    #     u2, v2, a2 = u[gcon[n2,0]], u[gcon[n2,1]], u[gcon[n1,2]]
-
-    #     L = ((x2-x1)**2 + (y2-y1)**2)**0.5
-    #     c = (x2-x1)/L
-    #     s = (y2-y1)/L
-
-    #     eps[e] = (u2-u1)*c/L + (v2-v1)*s/L
-    #     stress[e] = eps[e] * A
-    #     Fi[e]  = eps[e]*E*A
-
+    
     return u, Fe
 
 ## Inputs
