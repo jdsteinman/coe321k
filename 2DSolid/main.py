@@ -2,9 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from solid2d import *
 
-# plt.style.use('ggplot')
-
-
 def solve6():
     path = "./inputs/"
     nodes = path + "nodes6.txt"
@@ -66,7 +63,7 @@ def solve24():
     f1, a1 = plot_deformation(nodes, elements, u)
     f2, a2 = plot_stress_left(nodes, elements, stress, ele_left)
     f3, a3 = plot_stress_bottom(nodes, elements, stress, ele_bottom)
-    # plt.show()
+    plt.show()
 
 def solveR():
     path = "./inputs/"
@@ -87,7 +84,7 @@ def solveR():
     f1, a1 = plot_deformation(nodes, elements, u)
     f2, a2 = plot_stress_left(nodes, elements, stress, ele_left)
     f3, a3 = plot_stress_bottom(nodes, elements, stress, ele_bottom)
-    # plt.show()
+    plt.show()
 
 
 def plot_deformation(nodes_file, elements_file, disp):
@@ -118,7 +115,8 @@ def plot_deformation(nodes_file, elements_file, disp):
         ybar = (y1+y2+y3)/3
         # ax.text(xbar, ybar, str(e))
 
-    ax.set_title("Deformation of plate, scaled by 0.1")
+    ax.set_title(r"Deformation of plate, scaled by 0.1E/R$\sigma$")
+    # ax.set_title(r"Undeformed Plate")
     ax.set_xlabel("x/R")
     ax.set_ylabel("y/R")
     return fig, ax
@@ -226,4 +224,4 @@ def plot_stress_bottom(nodes_file, elements_file, stress, ele_list):
     return fig, ax
 
 if __name__=="__main__":
-    solve24()
+    solve6()
