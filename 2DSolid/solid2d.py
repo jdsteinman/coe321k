@@ -6,14 +6,9 @@ def solve_solid(nodes_file, elements_file, forces_file, disp_file, index=0):
 
     # Read and preallocate
     nodes = read_nodes(nodes_file)
-    elements, E, nu = read_elements(elements_file)
-    disp = read_disp(disp_file)
-    forces = read_forces(forces_file)
-
-    if index==1:
-        elements[:,0:3]-=1
-        disp[:,0:2]-=1
-        forces[:,0:2]-=1
+    elements, E, nu = read_elements(elements_file, index)
+    disp = read_disp(disp_file, index)
+    forces = read_forces(forces_file, index)
 
     NN = nodes.shape[0]
     NE = elements.shape[0]
@@ -159,7 +154,7 @@ def read_nodes(nodes_file):
     nodes = np.array(nodes)          
     return nodes
 
-def read_elements(elements_file):
+def read_elements(elements_file, index):
     elements = []
     with open(elements_file, 'r') as f:
         for i, line in enumerate(f):
@@ -175,10 +170,13 @@ def read_elements(elements_file):
                 n3 = float(nums[3])
                 elements.append([n1, n2, n3])
 
-    elements = np.array(elements)        
+    elements = np.array(elements)     
+    if index==1:
+        elements[:,0:3]-=1
+
     return elements, E, nu
 
-def read_disp(disp_file):
+def read_disp(disp_file, index):
     disp = []
     with open(disp_file, 'r') as f:
         for i, line in enumerate(f):
@@ -191,11 +189,13 @@ def read_disp(disp_file):
                 dof = int(nums[1])
                 val = float(nums[2])
                 disp.append([node, dof, val])
-
     disp = np.array(disp)     
+    if index==1:
+        disp[:,0:2]-=1
+
     return disp
 
-def read_forces(forces_file):
+def read_forces(forces_file, index):
     forces = []
     with open(forces_file, 'r') as f:
         for i, line in enumerate(f):
@@ -208,6 +208,8 @@ def read_forces(forces_file):
                 dof = int(nums[1])
                 val = float(nums[2])
                 forces.append([node, dof, val])
+    forces = np.array(forces)  
+    if index==1:
+        forces[:,0:2]-=1   
 
-    forces = np.array(forces)     
     return forces

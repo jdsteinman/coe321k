@@ -6,7 +6,10 @@ from math import cos, sin, asin, pi
 def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
 
     # Read and preallocate
-    nodes, elements, forces, disp = read_inputs(nodes_file, elements_file, forces_file, disp_file, index)
+    nodes = read_nodes(nodes_file)
+    elements = read_elements(elements_file, index)
+    forces = read_forces(forces_file, index)
+    disp = read_disp(disp_file, index)
 
     NN = nodes.shape[0]
     NE = elements.shape[0]
@@ -58,7 +61,7 @@ def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
         theta = asin(cz)
         if theta==pi/2:
             phi=0
-        else
+        else:
             phi = asin(cy/cos(theta))
 
         c=cos(phi); s=sin(phi)
@@ -163,28 +166,78 @@ def solve_frame(nodes_file, elements_file, forces_file, disp_file, index=0):
     return u, Fe
 
 ## Inputs
-def read_inputs(nodes, elements, forces, disp, index=0):
-    nodes = np.genfromtxt(nodes, comments='#')
-    elements = np.genfromtxt(elements, comments='#')
-    forces = np.genfromtxt(forces, comments='#')
-    disp = np.genfromtxt(disp, comments='#')
+def read_nodes(nodes_file):
+    nodes = []
+    with open(nodes_file, 'r') as f:
+        for i, line in enumerate(f):
+            if i==0:
+                nums = line.split()
+                NN = int(nums[0])
+            else:
+                nums = line.split()
+                x = float(nums[1])
+                y = float(nums[2])
+                z = float(nums[3])
+                nodes.append([x, y, z])
+    nodes = np.array(nodes)          
+    return nodes
 
-    if elements.ndim == 1:
-        elements = elements.reshape((1, -1))
-    if disp.ndim == 1:
-        disp = disp.resape((1, -1))
-    if forces.ndim == 1:
-        forces = forces.reshape((1,-1))
-
-    if index==0:
-        pass
-    elif index==1:
+def read_elements(elements_file, index):
+    elements = []
+    with open(elements_file, 'r') as f:
+        for i, line in enumerate(f):
+            if i==0:
+                nums = line.split()
+                NE = int(nums[0])
+            else:
+                nums = line.split()
+                n1 = float(nums[1])
+                n2 = float(nums[2])
+                psi  = float(nums[3])
+                EA   = float(nums[4])
+                EI_Z = float(nums[5])
+                EI_Y = float(nums[6])
+                GI_P = float(nums[7])
+                elements.append([n1, n2, psi, EA, EI_Z, EI_Y, GI_P])
+    elements = np.array(elements)        
+    if index==1:
         elements[:,0:2]-=1
-        disp[:,0:2]-=1
-        forces[:,0:2]-=1
-    else:
-        print("Invalid file ordering: " + index)
-        return
 
-    return nodes, elements, forces, disp
+    return elements
 
+def read_disp(disp_file, index):
+    disp = []
+    with open(disp_file, 'r') as f:
+        for i, line in enumerate(f):
+            if i==0:
+                nums = line.split()
+                ND = int(nums[0])
+            else:
+                nums = line.split()
+                node = int(nums[0])
+                dof = int(nums[1])
+                val = float(nums[2])
+                disp.append([node, dof, val])
+    disp = np.array(disp)   
+    if index==1:
+        disp[:,0:2]-=1  
+        
+    return disp
+
+def read_forces(forces_file, index):
+    forces = []
+    with open(forces_file, 'r') as f:
+        for i, line in enumerate(f):
+            if i==0:
+                nums = line.split()
+                NF = int(nums[0])
+            else:
+                nums = line.split()
+                node = int(nums[0])
+                dof = int(nums[1])
+                val = float(nums[2])
+                forces.append([node, dof, val])
+    forces = np.array(forces)     
+    if index==1:
+        forces[:,0:2]-=1   
+    return forces
