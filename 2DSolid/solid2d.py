@@ -22,10 +22,17 @@ def solve_solid(nodes_file, elements_file, forces_file, disp_file, index=0):
     u = np.zeros((2*NN))
     F = np.zeros((2*NN))
     K = np.zeros((2*NN, 2*NN))
-    eps = np.zeros((NE))
-    stress = np.zeros((NE))
+    B = np.zeros((NE, 3, 6))
+    strain = np.zeros((NE, 3))
+    stress = np.zeros((NE, 3))
     Fi  = np.zeros((NE))
     Fe = np.zeros((2*NN))
+
+    C = np.array([
+            [E/(1-nu*nu), nu*E/(1-nu*nu), 0],
+            [nu*E/(1-nu*nu), E/(1-nu*nu), 0],
+            [0, 0, 0.5*E/1+nu]
+    ])  
 
     # Global Connectivity 
     # gcon(i, j) = global dof for node i and dof 
@@ -59,30 +66,25 @@ def solve_solid(nodes_file, elements_file, forces_file, disp_file, index=0):
         A = 0.5*(-x2*y1+x3*y1+x1*y2-x3*y2-x1*y3+x2*y3)
 
         # B matrix
-        B = np.array([
+        Bloc = np.array([
             [y2-y3, 0, -y1+y3, 0, y1-y2, 0],
             [0, -x2+x3, 0, x1-x3, 0, -x1+x2],
             [-x2+x3, y2-y3, x1-x3, -y1+y3, -x1+x2, y1-y2]
         ])
-        B = B/(2*A)
+        Bloc = Bloc/(2*A)
+        B[e] = Bloc     
 
-        C = np.array([
-            [E/(1-nu*nu), nu*E/(1-nu*nu), 0],
-            [nu*E/(1-nu*nu), E/(1-nu*nu), 0],
-            [0, 0, 0.5*E/1+nu]
-        ])        
-
-        Kloc = A*B.T@C@B
+        Kloc = A*Bloc.T@C@Bloc
 
         # Loop over local rows
-        for inode in range(2):
+        for inode in range(3):
             for idof in range(2):
                 ldofi =  2*inode+idof
                 gnodei = int(elements[e, inode])
                 gdofi = gcon[gnodei, idof]
 
                 # Loop over local columns
-                for jnode in range(2):
+                for jnode in range(3):
                     for jdof in range(2):
                         ldofj = 2*jnode+jdof
                         gnodej = int(elements[e, jnode])
@@ -94,7 +96,7 @@ def solve_solid(nodes_file, elements_file, forces_file, disp_file, index=0):
     Freduced = F
 
     for e, row in enumerate(elements):
-        for inode in range(2):
+        for inode in range(3):
             for idof in range(2):
                 ldofi =  2*inode+idof
                 gnodei = int(elements[e, inode])
@@ -108,7 +110,7 @@ def solve_solid(nodes_file, elements_file, forces_file, disp_file, index=0):
                     continue
 
                 # Loop over local columns
-                for jnode in range(2):
+                for jnode in range(3):
                     for jdof in range(2):
                         ldofj = 2*jnode+jdof
                         gnodej = int(elements[e, jnode])
@@ -124,7 +126,23 @@ def solve_solid(nodes_file, elements_file, forces_file, disp_file, index=0):
     # Find nodal forces
     Fe = K@u
 
-    return u, Fe
+    for e, row in enumerate(elements):
+        n1 = int(row[0])
+        n2 = int(row[1])
+        n3 = int(row[2])
+
+        index = [[n1,n1,n2,n2,n3,n3],[0,1,0,1,0,1]]
+        u_ele = u[gcon[index]]
+        u_ele = u_ele.reshape((-1,1))
+
+        eps  = B[e]@u_ele
+        sigma = C@eps
+
+        strain[e] = eps.ravel()
+        stress[e] = sigma.ravel()
+
+    return u, strain, stress
+
 
 def read_nodes(nodes_file):
     nodes = []
