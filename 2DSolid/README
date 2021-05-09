@@ -1,25 +1,25 @@
-2D Truss Solver
+2D Solid Solver
 
 Purpose:
-    Solve arbitrary 2D truss structure for:
+    Solve arbitrary 2D solid structure for:
         Nodal Displacements
-        Nodal Forces
-        Element Forces
         Element Strains
+        Element Stresses
 
 To run:
-    u, eps, stress, fi, fe = truss2D(nodes_file, elements_file, displacements_file, forces_file, index)
+    u, strain, stress = truss2D(nodes_file, elements_file, displacements_file, forces_file, index)
 
 Inputs:
     nodes_file: ordered file containing nodal coordinates with the nth row: [node #, xn, yn, zn]
                 The first line should say the # of nodes
-    elements_file: connectivity file of the form [ele #, node1, node2, psi, EA, EI_Z, EI_Y, GI_P]
-                The first line should say the # of elements
+    elements_file: connectivity file of the form [ele #, node1, node2, node3]
+                The first line should read [Total Elements, E, nu]
     displacements_file: displacment BC file of the form [node, dof, value]
     forces_file: force BC file of the form [node, dof, value]
     index: 0,1 index base of the input files. Default 0
 
 Outputs:
-    u: nodal displacements/rotations
-    fe: nodal forces/moments
+    u: nodal displacements
+    strain: element strains
+    stress: element strains
 

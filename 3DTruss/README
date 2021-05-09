@@ -11,8 +11,10 @@ To run:
     u, eps, stress, fi, fe = truss2D(nodes_file, elements_file, displacements_file, forces_file, index)
 
 Inputs:
-    nodes_file: ordered file containing nodal coordinates with the nth row: [xn, yn, zn]
-    elements_file: connectivity file of the form [node1, node2, E, A]
+    nodes_file: ordered file containing nodal coordinates with the nth row: [node #, xn, yn, zn]
+                The first line should say the # of nodes
+    elements_file: connectivity file of the form [ele #, node1, node2, E, A]
+                The first line should say the # of elements
     displacements_file: displacment BC file of the form [node, dof, value]
     forces_file: force BC file of the form [node, dof, value]
     index: 0,1 index base of the input files. Default 0
