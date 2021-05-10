@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from solid2d import *
+from math import isclose
 
 def solve6():
     path = "./inputs/"
@@ -10,6 +11,7 @@ def solve6():
     disp = path + "displacements6.txt"
 
     u, strain, stress = solve_solid(nodes, elements, forces, disp, index=1)
+    np.savetxt("output/stress6.txt", stress)
 
     # print("\nu\n", u.reshape((-1,1)))
     # print("\nstrain\n", strain)
@@ -19,8 +21,8 @@ def solve6():
     ele_bottom = np.arange(0,24,4)
 
     f1, a1 = plot_deformation(nodes, elements, u)
-    f2, a2 = plot_stress_left(nodes, elements, stress, ele_left)
-    f3, a3 = plot_stress_bottom(nodes, elements, stress, ele_bottom)
+    # f2, a2 = plot_stress_left(nodes, elements, stress)
+    # f3, a3 = plot_stress_bottom(nodes, elements, stress)
     plt.show()
 
 def solve12():
@@ -31,6 +33,7 @@ def solve12():
     disp = path + "displacements12.txt"
 
     u, strain, stress = solve_solid(nodes, elements, forces, disp, index=1)
+    np.savetxt("output/stress12.txt", stress)
 
     # print("\nu\n", u.reshape((-1,1)))
     # print("\nstrain\n", strain)
@@ -40,8 +43,8 @@ def solve12():
     ele_bottom = np.arange(0,48,4)
 
     f1, a1 = plot_deformation(nodes, elements, u)
-    f2, a2 = plot_stress_left(nodes, elements, stress, ele_left)
-    f3, a3 = plot_stress_bottom(nodes, elements, stress, ele_bottom)
+    # f2, a2 = plot_stress_left(nodes, elements, stress)
+    # f3, a3 = plot_stress_bottom(nodes, elements, stress)
     plt.show()
 
 def solve24():
@@ -52,6 +55,7 @@ def solve24():
     disp = path + "displacements24.txt"
 
     u, strain, stress = solve_solid(nodes, elements, forces, disp, index=1)
+    np.savetxt("output/stress24.txt", stress)
 
     # print("\nu\n", u.reshape((-1,1)))
     # print("\nstrain\n", strain)
@@ -61,8 +65,8 @@ def solve24():
     ele_bottom = np.arange(0,96,4)
 
     f1, a1 = plot_deformation(nodes, elements, u)
-    f2, a2 = plot_stress_left(nodes, elements, stress, ele_left)
-    f3, a3 = plot_stress_bottom(nodes, elements, stress, ele_bottom)
+    # f2, a2 = plot_stress_left(nodes, elements, stress)
+    # f3, a3 = plot_stress_bottom(nodes, elements, stress)
     plt.show()
 
 def solveR():
@@ -73,17 +77,18 @@ def solveR():
     disp = path + "displacementsR.txt"
 
     u, strain, stress = solve_solid(nodes, elements, forces, disp, index=1)
+    np.savetxt("output/stressR.txt", stress)
 
     # print("\nu\n", u.reshape((-1,1)))
     # print("\nstrain\n", strain)
     # print("\nstress\n", stress)
 
-    ele_left = np.arange(123,147,4)
-    ele_bottom = np.arange(0,24,4)
+    ele_left = np.arange(531,579,4)
+    ele_bottom = np.arange(0,48,4)
 
     f1, a1 = plot_deformation(nodes, elements, u)
-    f2, a2 = plot_stress_left(nodes, elements, stress, ele_left)
-    f3, a3 = plot_stress_bottom(nodes, elements, stress, ele_bottom)
+    f2, a2 = plot_stress_left(nodes, elements, stress)
+    f3, a3 = plot_stress_bottom(nodes, elements, stress
     plt.show()
 
 
@@ -97,7 +102,7 @@ def plot_deformation(nodes_file, elements_file, disp):
     fig, ax = plt.subplots(1,1)
     ax.set_aspect('equal')
 
-    nodes = nodes + u
+    nodes_d = nodes + u  # deformed nodes
     for e, row in enumerate(elements):
         n1 = int(row[0])
         n2 = int(row[1])
@@ -107,21 +112,32 @@ def plot_deformation(nodes_file, elements_file, disp):
         x2, y2 = nodes[n2,0], nodes[n2,1]
         x3, y3 = nodes[n3,0], nodes[n3,1]
 
-        ax.plot([x1,x2],[y1,y2])
-        ax.plot([x1,x3],[y1,y3])
-        ax.plot([x2,x3],[y2,y3])
+        ax.plot([x1,x2],[y1,y2], c='#bebebe', zorder=1)
+        ax.plot([x1,x3],[y1,y3], c='#bebebe', zorder=1)
+        ax.plot([x2,x3],[y2,y3], c='#bebebe', zorder=1)
+
+        # Deformed nodes
+        X1, Y1 = nodes_d[n1,0], nodes_d[n1,1]
+        X2, Y2 = nodes_d[n2,0], nodes_d[n2,1]
+        X3, Y3 = nodes_d[n3,0], nodes_d[n3,1]
+
+        ax.plot([X1,X2],[Y1,Y2], c='r', zorder=2)
+        ax.plot([X1,X3],[Y1,Y3], c='r', zorder=2)
+        ax.plot([X2,X3],[Y2,Y3], c='r', zorder=2)
 
         xbar = (x1+x2+x3)/3
         ybar = (y1+y2+y3)/3
-        # ax.text(xbar, ybar, str(e))
 
     ax.set_title(r"Deformation of plate, scaled by 0.1E/R$\sigma$")
-    # ax.set_title(r"Undeformed Plate")
     ax.set_xlabel("x/R")
     ax.set_ylabel("y/R")
+
+    legend_elements = [plt.Line2D([0], [0], color='r', lw=2, label='Deformed'),
+                    plt.Line2D([0], [0], color='#bebebe', lw=2, label='Undeformed')]
+    ax.legend(handles=legend_elements, bbox_to_anchor=(1.04, 1), ncol=1)
     return fig, ax
 
-def plot_stress_left(nodes_file, elements_file, stress, ele_list):
+def plot_stress_left(nodes_file, elements_file, stress):
     nodes = read_nodes(nodes_file)
     elements, _, _ = read_elements(elements_file, 1)
     
@@ -129,8 +145,6 @@ def plot_stress_left(nodes_file, elements_file, stress, ele_list):
     sigma_xx = np.array([])
     sigma_yy = np.array([])
     for e, row in enumerate(elements):
-        if not e in ele_list: continue
-
         n1 = int(row[0])
         n2 = int(row[1])
         n3 = int(row[2])
@@ -138,6 +152,12 @@ def plot_stress_left(nodes_file, elements_file, stress, ele_list):
         x1, y1 = nodes[n1,0], nodes[n1,1]
         x2, y2 = nodes[n2,0], nodes[n2,1]
         x3, y3 = nodes[n3,0], nodes[n3,1]
+
+        # skip if not two nodes on left boundary
+        a = isclose(x1,0.0)
+        b = isclose(x2,0.0)
+        c = isclose(x3,0.0)
+        if not ((a and b) or (a and c) or (b and c)): continue
 
         xbar = (x1+x2+x3)/3
         ybar = (y1+y2+y3)/3
@@ -171,7 +191,7 @@ def plot_stress_left(nodes_file, elements_file, stress, ele_list):
 
     return fig, ax
 
-def plot_stress_bottom(nodes_file, elements_file, stress, ele_list):
+def plot_stress_bottom(nodes_file, elements_file, stress):
     nodes = read_nodes(nodes_file)
     elements, _, _ = read_elements(elements_file, 1)
     
@@ -180,8 +200,6 @@ def plot_stress_bottom(nodes_file, elements_file, stress, ele_list):
     sigma_xx = np.array([])
     sigma_yy = np.array([])
     for e, row in enumerate(elements):
-        if not e in ele_list: continue
-
         n1 = int(row[0])
         n2 = int(row[1])
         n3 = int(row[2])
@@ -189,6 +207,12 @@ def plot_stress_bottom(nodes_file, elements_file, stress, ele_list):
         x1, y1 = nodes[n1,0], nodes[n1,1]
         x2, y2 = nodes[n2,0], nodes[n2,1]
         x3, y3 = nodes[n3,0], nodes[n3,1]
+
+        # skip if not two nodes on bottom boundary
+        a = isclose(y1,0.0)
+        b = isclose(y2,0.0)
+        c = isclose(y3,0.0)
+        if not ((a and b) or (a and c) or (b and c)): continue
 
         xbar = (x1+x2+x3)/3
         ybar = (y1+y2+y3)/3
@@ -224,4 +248,4 @@ def plot_stress_bottom(nodes_file, elements_file, stress, ele_list):
     return fig, ax
 
 if __name__=="__main__":
-    solve6()
+    solveR()

@@ -26,7 +26,7 @@ def solve_solid(nodes_file, elements_file, forces_file, disp_file, index=0):
     C = np.array([
             [E/(1-nu*nu), nu*E/(1-nu*nu), 0],
             [nu*E/(1-nu*nu), E/(1-nu*nu), 0],
-            [0, 0, 0.5*E/1+nu]
+            [0, 0, 0.5*E/(1+nu)]
     ])  
 
     # Global Connectivity 
